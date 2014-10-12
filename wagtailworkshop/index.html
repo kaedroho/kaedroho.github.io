@@ -1,0 +1,381 @@
+<!doctype html>
+<html lang="en">
+
+	<head>
+		<meta charset="utf-8">
+
+		<title>Building your first site with Wagtail</title>
+
+		<meta name="description" content="">
+		<meta name="author" content="Karl Hobley">
+
+		<meta name="apple-mobile-web-app-capable" content="yes" />
+		<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+		<link rel="stylesheet" href="css/reveal.min.css">
+		<link rel="stylesheet" href="css/theme/sky.css" id="theme">
+
+		<!-- For syntax highlighting -->
+		<link rel="stylesheet" href="lib/css/zenburn.css">
+
+		<!-- If the query includes 'print-pdf', include the PDF print sheet -->
+		<script>
+			if( window.location.search.match( /print-pdf/gi ) ) {
+				var link = document.createElement( 'link' );
+				link.rel = 'stylesheet';
+				link.type = 'text/css';
+				link.href = 'css/print/pdf.css';
+				document.getElementsByTagName( 'head' )[0].appendChild( link );
+			}
+		</script>
+
+		<!--[if lt IE 9]>
+		<script src="lib/js/html5shiv.js"></script>
+		<![endif]-->
+	</head>
+
+	<body>
+
+		<div class="reveal">
+
+			<div class="slides">
+				<section>
+                    <img class="wagtail" src="wagtail-logo.svg" style="border: none; box-shadow: none;">
+					<h2>Building your first site in Wagtail</h2>
+					<p>
+						<small>Karl Hobley (@kaedroho)</small>
+					</p>
+				</section>
+
+				<section>
+					<h2>What is Wagtail?</h2>
+                    <ul>
+                        <li class="fragment">Started August 2013. Open sourced last Feburary</li>
+                        <li class="fragment">Built with Python/Django</li>
+                        <li class="fragment">Focus on user interface and flexibility</li>
+                        <li class="fragment">Monthly releases</li>
+                    </ul>
+				</section>
+
+                <section>
+                    <h2>Who am I?</h2>
+                    <ul>
+                        <li class="fragment">Python developer at Torchbox</li>
+                        <li class="fragment">Wagtail developer since last October</li>
+                        <li class="fragment">Created search, embeds, redirects, staticsites modules</li>
+                    </ul>
+                </section>
+
+                <section>
+                    <h2>Let's get started!</h2>
+
+                    <h4>You will need to have the following installed:</h4>
+                    <ul>
+                        <li>Python, PIP and Wagtail</li>
+                        <li>Virtual environments (virtualenv or pyvenv) or Vagrant</li>
+                    </ul>
+                </section>
+
+                <section>
+                    <h2>Creating your project</h2>
+
+					<pre><code data-trim contenteditable>
+$ wagtail start my_website
+					</code></pre>
+                </section>
+
+                <section>
+                    <h2>Running it</h2>
+
+					<pre><code data-trim contenteditable>
+$ cd my_project
+$ virtualenv venv                  # Create a virtual environment
+$ source venv/bin/activate         # Activate the virtual environment
+$ pip install -r requirements.txt  # Install dependencies for projectt
+$ ./manage.py migrate              # Setup the database
+$ ./manage.py createsuperuser      # Create yourself an admin account
+$ ./manage.py runserver            # Run the development server
+					</code></pre>
+                </section>
+
+                <section>
+                    <h2>Let's make some changes...</h2>
+
+                    <ul>
+                        <li class="fragment">Add some extra fields to the homepage</li>
+                        <li class="fragment">Add a blog</li>
+                    </ul>
+                </section>
+
+                <section>
+                    <h2>Adding extra fields</h2>
+                    <p>Wagtail pages are Django models and all builtin Django fields are supported</p>
+
+					<pre><code data-trim contenteditable>
+# core/models.py
+from django.db import models
+from wagtail.wagtailcore.models import Page
+from wagtail.wagtailcore.fields import RichTextField
+
+
+class HomePage(Page):
+    intro = models.TextField()
+    body = RichTextField()
+    background_image = models.ForeignKey(
+        'wagtailimages.Image',
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL
+    )
+					</code></pre>
+				</section>
+
+                <section>
+                    <h2>Adding extra fields to the admin</h2>
+
+					<pre><code data-trim contenteditable>
+# core/models.py
+from wagtail.wagtailadmin.edit_handlers import FieldPanel
+from wagtail.wagtailimges.edit_handlers import ImageChooserPanel
+
+
+# Underneath the HomePage class
+
+HomePage.content_panels = Page.content_panels + [
+    FieldPanel('intro'),
+    FieldPanel('body'),
+    ImageChooserPanel('background_image')
+]
+					</code></pre>
+                </section>
+
+                <section>
+                    <h2>Migrating the database</h2>
+
+					<pre><code data-trim contenteditable>
+$ ./manage.py makemigrations core  # Create a new migration
+$ ./manage.py migrate              # Apply it to your local database
+					</code></pre>
+                </section>
+
+				<section>
+					<h2>Templating</h2>
+                    <p>All page types have a template named after their model</p>
+                    <pre><code data-trim contenteditable>
+# templates/core/home_page.html
+
+{% extends "base.html" %}
+{% load wagtailcore_tags wagtailimages_tags %}
+
+{% block content %}
+    <h1>{{ self.title }}</h1>
+
+    <p class="intro">{{ self.intro }}</p>
+
+    <p>{{ self.body_text|richtext }}</p>
+
+    {% image self.background_image width-1000 %}
+{% endblock %}
+					</code></pre>
+                </section>
+
+                <section>
+                    <h2>Adding a blog</h2>
+                    <p>We now need to create two more page types:</p>
+
+                    <ul>
+                        <li>Blog index</li>
+                        <li>Blog entry</li>
+                    </ul>
+                </section>
+
+                <section>
+                    <h2>The blog index</h2>
+
+					<pre><code data-trim contenteditable>
+# blog/models.py
+from django.db import models
+from wagtail.wagtailcore.models import Page
+
+
+class BlogIndexPage(Page):
+    intro = models.TextField()
+
+BlogIndexPage.content_panels = Page.content_panels + [
+    FieldPanel('intro'),
+]
+					</code></pre>
+ 
+                </section>
+
+                <section>
+                    <h2>The blog entry</h2>
+
+					<pre><code data-trim contenteditable>
+# blog/models.py
+class BlogEntryPage(Page):
+    published_date = models.DateField()
+    main_image = models.ForeignKey(
+        'wagtailimages.Image',
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL
+    )
+    body = RichTextField()
+
+BlogEntryPage.content_panels = Page.content_panels + [
+    FieldPanel('published_date'),
+    ImageChooserPanel('main_image'),
+    FieldPanel('body'),
+]
+					</code></pre>
+ 
+                </section>
+
+                <section>
+                    <h2>Listing blog entries in the index</h2>
+                    <p>Use the get_context method to add extra template variables</p>
+
+					<pre><code data-trim contenteditable>
+# blog/models.py
+class BlogIndexPage(Page):
+    ...
+
+    def get_context(self, request):
+        context = super(BlogIndexPage, self).get_context(request)
+        context['blog_entries'] = BlogEntryPage.objects.child_of(self).live()
+        return context
+					</code></pre>
+ 
+                </section>
+
+                <section>
+                    <h2>Listing blog entries in the index</h2>
+
+					<pre><code data-trim contenteditable>
+# blog/templates/blog/blog_index_page.html
+{% load wagtailimages_tags %}
+
+{% block content %}
+    ...
+
+    <ul class="blog-entries">
+        {% for blog_entry in blog_entries %}
+            <li><a href="{{ blog_entry.url }}">
+                {% image blog_entry.main_image fill-100x100 %}
+                <h3>{{ blog_entry.title }}</h3>
+            </a></li>
+        {% endfor %}
+    </ul>
+{% endblock %}
+                    </code></pre>
+ 
+                </section>
+
+                <section>
+                    <h2>Adding a main menu</h2>
+
+					<pre><code data-trim contenteditable>
+# core/templates/base.html
+
+{# Just above the content block #}
+
+<ul class="menu">
+    {% for page in request.site.root_page.get_children.live.in_menu %}
+        <li><a href="{{ page.url }}">{{ page.title }}</a></li>
+    {% endfor %}
+</ul>
+
+                    </code></pre>
+ 
+                </section>
+
+
+<!--
+    SEARCH
+    REPEATED FIELDS
+    EMBEDS
+-->
+
+<!--
+                <section>
+                    <h2>Repeated fields</h2>
+                    <p>Create a new model for each repeated field and join it to the page with a "ParentalKey"</p>
+                    
+					<pre><code data-trim contenteditable>
+# core/models.py
+
+from modelcluster.fields import ParentalKey
+from wagtail.wagtailcore.models import Orderable
+
+
+class HomePageLink(Orderable):
+    page = ParentalKey('core.HomePage', related_name='links')
+    name = models.CharField(max_length=255)
+    link = models.URLField()
+
+    panels = [
+        FieldPanel('name'),
+        FieldPanel('link'),
+    ]
+					</code></pre>
+	
+                </section>
+
+                <section>
+                    <h2>Add it to the admin</h2>
+                    
+					<pre><code data-trim contenteditable>
+# core/models.py
+
+from wagtail.wagtailadmin.edit_handlers import InlinePanel
+
+HomePage.content_panels = [
+    InlinePanel(HomePage, 'links', label="Links"),
+]
+					</code></pre>
+	
+                </section>
+-->
+
+			</div>
+
+		</div>
+
+		<script src="lib/js/head.min.js"></script>
+		<script src="js/reveal.min.js"></script>
+
+		<script>
+
+			// Full list of configuration options available here:
+			// https://github.com/hakimel/reveal.js#configuration
+			Reveal.initialize({
+				controls: true,
+				progress: true,
+				history: true,
+				center: true,
+
+				theme: Reveal.getQueryHash().theme, // available themes are in /css/theme
+				transition: 'none', // default/cube/page/concave/zoom/linear/fade/none
+
+				// Parallax scrolling
+				// parallaxBackgroundImage: 'https://s3.amazonaws.com/hakim-static/reveal-js/reveal-parallax-1.jpg',
+				// parallaxBackgroundSize: '2100px 900px',
+
+				// Optional libraries used to extend on reveal.js
+				dependencies: [
+					{ src: 'lib/js/classList.js', condition: function() { return !document.body.classList; } },
+					{ src: 'plugin/markdown/marked.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+					{ src: 'plugin/markdown/markdown.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+					{ src: 'plugin/highlight/highlight.js', async: true, callback: function() { hljs.initHighlightingOnLoad(); } },
+					{ src: 'plugin/zoom-js/zoom.js', async: true, condition: function() { return !!document.body.classList; } },
+					{ src: 'plugin/notes/notes.js', async: true, condition: function() { return !!document.body.classList; } }
+				]
+			});
+
+		</script>
+
+	</body>
+</html>
