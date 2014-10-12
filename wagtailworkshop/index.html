@@ -52,36 +52,38 @@
 				<section>
 					<h2>What is Wagtail?</h2>
                     <ul>
-                        <li class="fragment">Started August 2013. Open sourced last Feburary</li>
-                        <li class="fragment">Built with Python/Django</li>
-                        <li class="fragment">Focus on user interface and flexibility</li>
-                        <li class="fragment">Monthly releases</li>
+                        <li>Started August 2013. Open sourced last Feburary</li>
+                        <li>Built with Python/Django</li>
+                        <li>Focus on user interface and flexibility</li>
+                        <li>Monthly releases</li>
                     </ul>
 				</section>
 
                 <section>
                     <h2>Who am I?</h2>
                     <ul>
-                        <li class="fragment">Python developer at Torchbox</li>
-                        <li class="fragment">Wagtail developer since last October</li>
-                        <li class="fragment">Created search, embeds, redirects, staticsites modules</li>
+                        <li>Python developer at Torchbox</li>
+                        <li>Wagtail developer since last October</li>
+                        <li>Created search, embeds, redirects, staticsites modules</li>
                     </ul>
                 </section>
 
                 <section>
-                    <h2>Let's get started!</h2>
+                    <h2>Setting it up</h2>
 
                     <h4>You will need to have the following installed:</h4>
                     <ul>
-                        <li>Python, PIP and Wagtail</li>
-                        <li>Virtual environments (virtualenv or pyvenv) or Vagrant</li>
+                        <li>Python (2 or 3) and PIP</li>
+                        <li>Either virtualenv or pyvenv</li>
                     </ul>
                 </section>
 
                 <section>
                     <h2>Creating your project</h2>
+                    <p>Create a virtual environment and activate it. Then run:</p>
 
 					<pre><code data-trim contenteditable>
+$ pip install wagtail
 $ wagtail start my_website
 					</code></pre>
                 </section>
@@ -90,9 +92,7 @@ $ wagtail start my_website
                     <h2>Running it</h2>
 
 					<pre><code data-trim contenteditable>
-$ cd my_project
-$ virtualenv venv                  # Create a virtual environment
-$ source venv/bin/activate         # Activate the virtual environment
+$ cd my_website
 $ pip install -r requirements.txt  # Install dependencies for projectt
 $ ./manage.py migrate              # Setup the database
 $ ./manage.py createsuperuser      # Create yourself an admin account
@@ -303,7 +303,7 @@ class BlogIndexPage(Page):
 
 {% block content %}
     <form action="{% url 'wagtailsearch_search' %}" method="get">
-        <input type="text" name="q"{% if query_string %} value="{{ query_string }}"{% endif %}>
+        <input type="text" name="q" {% if query_string %} value="{{ query_string }}"{% endif %} >
         <input type="submit" value="Search">
     </form>
 
