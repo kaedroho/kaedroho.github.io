@@ -142,12 +142,3 @@ body {
  *********************************************/
 .reveal .slide-number {
   color: #3b759e; }
-
-img.wagtail {
-  border: none;
-  box-shadow: none;
-}
-
-h4 {
-    text-align: left;
-}
